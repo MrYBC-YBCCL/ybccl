@@ -1,4 +1,4 @@
-
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +31,7 @@
         }
 
         main {
-            max-width: 950px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 75px 24px;
             text-align: center;
@@ -44,7 +44,7 @@
 
         .lists {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 20px;
         }
 
@@ -53,7 +53,7 @@
             flex-direction: column;
             justify-content: center;
             min-height: 190px;
-            padding: 25px 15px;
+            padding: 25px 20px;
             background: #1b1d25;
             border: 1px solid #343641;
             border-radius: 14px;
@@ -80,6 +80,30 @@
             margin: 0;
         }
 
+        .list-button .description {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #858894;
+        }
+
+        .new-list {
+            border-color: #71313a;
+            background: linear-gradient(145deg, #241a21, #1b1d25);
+        }
+
+        .new-list .tag {
+            display: inline-block;
+            align-self: center;
+            margin-bottom: 12px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #e34450;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
         .back {
             display: inline-block;
             margin-top: 35px;
@@ -91,17 +115,17 @@
             color: white;
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 600px) {
             .lists {
                 grid-template-columns: 1fr;
             }
 
             main {
-                padding-top: 45px;
+                padding: 45px 18px;
             }
 
             .list-button {
-                min-height: 145px;
+                min-height: 150px;
             }
         }
     </style>
@@ -132,6 +156,15 @@
             <a href="spam.html" class="list-button">
                 <h2>YBCSPCL</h2>
                 <p>YBC Spam Challenge List</p>
+            </a>
+
+            <a href="ybcirl.html" class="list-button new-list">
+                <span class="tag">NEW LIST</span>
+                <h2>YBCILR</h2>
+                <p>YBC Impossible Levels Records</p>
+                <p class="description">
+                    Push the limits. Set records. See who can get furthest.
+                </p>
             </a>
         </div>
 
