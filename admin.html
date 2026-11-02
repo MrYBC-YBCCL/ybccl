@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YBCCL Admin Login</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #101010;
+      color: #f5f5f5;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      margin: 80px auto;
+    }
+
+    h1 {
+      color: #ff4545;
+      margin-bottom: 6px;
+    }
+
+    .muted {
+      color: #aaa;
+    }
+
+    .panel {
+      background: #1b1b1b;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 22px;
+      margin-top: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0;
+      border-radius: 7px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    input {
+      background: #111;
+      color: white;
+      border: 1px solid #444;
+    }
+
+    button {
+      border: none;
+      background: #e83b3b;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ff5050;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #ddd;
+    }
+
+    #loginMessage {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: #ff7070;
+    }
+
+    .success {
+      color: #80e6a0;
+    }
+
+    a {
+      color: #ff7777;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>YBCCL Admin</h1>
+  <p class="muted">YBC Challenge List management</p>
+
+  <div class="panel">
+
+    <h2>Owner Login</h2>
+
+    <form id="loginForm">
+
+      <label for="email">Admin email</label>
+      <input
+        id="email"
+        type="email"
+        placeholder="Admin email"
+        required
+      >
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        required
+      >
+
+      <button id="loginButton" type="submit">
+        Log In
+      </button>
+
+    </form>
+
+    <p id="loginMessage" role="status"></p>
+
+    <p style="text-align:center;margin-top:18px">
+      <a href="helper-login.html">
+        Helper login
+      </a>
+    </p>
+
+  </div>
+
+</div>
+
+<script>
+
+  const SUPABASE_URL =
+    "https://hdsorzrcvvyakckbgegk.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const $ = id => document.getElementById(id);
+
+  let checking = false;
+
+  function showError(message) {
+    $("loginMessage").textContent = message;
+    $("loginMessage").className = "error";
+  }
+
+  async function verifyAndRedirect() {
+
+    if (checking) return;
+
+    checking = true;
+
+    try {
+
+      const { data: sessionData, error: sessionError } =
+        await db.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      if (!sessionData.session) {
+        checking = false;
+        return;
+      }
+
+      const { data: isAdmin, error: adminError } =
+        await db.rpc("is_ybcc_admin");
+
+      if (adminError) throw adminError;
+
+      if (isAdmin !== true) {
+        await db.auth.signOut();
+        throw new Error(
+          "This account is not authorised as a YBCCL admin."
+        );
+      }
+
+      $("loginMessage").textContent =
+        "Login successful! Redirecting...";
+
+      $("loginMessage").className = "success";
+
+      window.location.replace("admin-pannel.html");
+
+    } catch (error) {
+
+      checking = false;
+      showError(error.message);
+
+    }
+  }
+
+  $("loginForm").addEventListener("submit", async event => {
+
+    event.preventDefault();
+
+    if (checking) return;
+
+    $("loginButton").disabled = true;
+    $("loginButton").textContent = "Checking...";
+    $("loginMessage").textContent = "";
+
+    try {
+
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      const { error } = await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      await verifyAndRedirect();
+
+    } catch (error) {
+
+      showError(error.message);
+
+    } finally {
+
+      $("loginButton").disabled = false;
+      $("loginButton").textContent = "Log In";
+
+    }
+
+  });
+
+  // If an authorised session already exists,
+  // send the user directly to the dashboard.
+  verifyAndRedirect();
+
+</script>
+
+</body>
+</html>

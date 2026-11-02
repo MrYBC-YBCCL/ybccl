@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helper Login | YBC</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #101116;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 32px;
+            background: #191a21;
+            border: 1px solid #30313b;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+
+        .logo {
+            color: #ed3434;
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: 25px;
+            margin: 10px 0;
+        }
+
+        .subtitle {
+            color: #a3a3ad;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #101116;
+            border: 1px solid #393a45;
+            border-radius: 8px;
+            color: white;
+            font-size: 25px;
+            text-align: center;
+            letter-spacing: 12px;
+            outline: none;
+            margin-bottom: 18px;
+        }
+
+        input:focus {
+            border-color: #ed3434;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #ed3434;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #c92525;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #message {
+            min-height: 22px;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #ff7777;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 22px;
+            color: #a3a3ad;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <div class="logo">YBC</div>
+
+        <h1>Helper Login</h1>
+
+        <p class="subtitle">
+            Enter the shared six-digit helper access code
+            to access the YBC administration panel.
+        </p>
+
+        <form id="loginForm">
+
+            <input
+                type="password"
+                id="helperCode"
+                placeholder="••••••"
+                maxlength="6"
+                minlength="6"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                autocomplete="off"
+                required
+            >
+
+            <button type="submit" id="loginButton">
+                Access Admin Panel
+            </button>
+
+        </form>
+
+        <div id="message"></div>
+
+        <a href="index.html" class="back-link">
+            Return to homepage
+        </a>
+
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://hdsorzrcvvyakckbgegk.supabase.co";
+
+        const SUPABASE_KEY = "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+        const db = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+        const form = document.getElementById("loginForm");
+        const codeInput = document.getElementById("helperCode");
+        const button = document.getElementById("loginButton");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const code = codeInput.value.trim();
+
+            if (!/^\d{6}$/.test(code)) {
+                message.textContent = "Enter a valid six-digit code.";
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Checking...";
+            message.textContent = "";
+
+            try {
+                // Get an existing session or create an anonymous one.
+                let { data: sessionData, error: sessionError } =
+                    await db.auth.getSession();
+
+                if (sessionError) throw sessionError;
+
+                if (!sessionData.session) {
+                    const { data, error } =
+                        await db.auth.signInAnonymously();
+
+                    if (error) throw error;
+
+                    sessionData.session = data.session;
+                }
+
+                if (!sessionData.session) {
+                    throw new Error("Could not establish a login session.");
+                }
+
+                // Ask the server to verify the helper code.
+                const { data, error } = await db.functions.invoke(
+                    "helper-login",
+                    {
+                        body: { code }
+                    }
+                );
+
+                if (error) {
+                    let details = data?.error;
+
+                    if (!details) {
+                        try {
+                            const response = await error.context.json();
+                            details = response.error;
+                        } catch {}
+                    }
+
+                    throw new Error(details || "Helper verification failed.");
+                }
+
+             if (!data || data.success !== true) {
+    throw new Error(data?.error || "Incorrect helper code.");
+}
+
+// Confirm that the helper session was actually saved.
+const { data: savedSession, error: savedSessionError } =
+    await db.auth.getSession();
+
+if (savedSessionError) throw savedSessionError;
+
+if (!savedSession?.session) {
+    throw new Error("Helper code accepted, but no login session was saved.");
+}
+
+// Check whether Supabase recognises this account as an admin.
+const { data: isAdmin, error: permissionError } =
+    await db.rpc("is_ybcc_admin");
+
+if (permissionError) {
+    throw new Error("Could not verify helper permissions: " + permissionError.message);
+}
+
+if (isAdmin !== true) {
+    throw new Error(
+        "Code accepted, but Supabase does not recognise this helper session as an admin. The problem is with helper-session registration or database permissions."
+    );
+}
+                message.style.color = "#63d68b";
+                message.textContent = "Access granted! Redirecting...";
+
+                button.textContent = "Access granted";
+
+                setTimeout(() => {
+                    window.location.href = "admin-pannel.html";s                }, 700);
+
+            } catch (error) {
+                console.error(error);
+
+                message.style.color = "#ff7777";
+                message.textContent =
+                    error.message || "Something went wrong.";
+
+                button.disabled = false;
+                button.textContent = "Access Admin Panel";
+                codeInput.value = "";
+                codeInput.focus();
+            }
+        });
+    </script>
+
+</body>
+</html>

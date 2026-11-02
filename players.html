@@ -1,0 +1,793 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>YBCCL | Player Rankings</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+    --bg: #101115;
+    --panel: #18191f;
+    --panel-light: #202127;
+    --border: #303139;
+    --red: #d93640;
+    --red-light: #f0525c;
+    --text: #f1f1f3;
+    --muted: #92939d;
+    --green: #55c98a;
+    --gold: #ffd700;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* HEADER */
+
+header {
+    background: #14151a;
+    border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+    max-width: 1250px;
+    margin: auto;
+    padding: 23px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 43px;
+    height: 43px;
+    background: var(--red);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    font-weight: 900;
+    color: white;
+}
+
+.brand-name {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.7px;
+}
+
+.brand-name span {
+    color: var(--red-light);
+}
+
+.brand-subtitle {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1.3px;
+    margin-top: 4px;
+}
+
+.system-status {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+}
+
+/* NAVIGATION */
+
+nav {
+    background: #18191f;
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+    max-width: 1250px;
+    margin: auto;
+    padding: 0 25px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+nav a {
+    display: inline-block;
+    padding: 16px 2px;
+    color: #aeb0ba;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+}
+
+nav a:hover {
+    color: white;
+}
+
+nav a.active {
+    color: white;
+    border-bottom-color: var(--red);
+}
+
+/* SHINY ADMIN PANEL BUTTON */
+
+nav a.admin-link {
+    margin: 7px 0;
+    padding: 10px 17px;
+    border: 1px solid #ff6871;
+    border-radius: 5px;
+    color: white;
+    background: linear-gradient(
+        135deg,
+        #ff6871 0%,
+        #e32636 45%,
+        #a90f20 100%
+    );
+    box-shadow:
+        0 0 8px rgba(255, 55, 70, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid #ff6871;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+nav a.admin-link:hover {
+    color: white;
+    background: linear-gradient(
+        135deg,
+        #ff8990 0%,
+        #ff3045 45%,
+        #c41428 100%
+    );
+    box-shadow:
+        0 0 15px rgba(255, 55, 70, 0.75),
+        0 0 25px rgba(255, 55, 70, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+/* MAIN */
+
+main {
+    width: min(1150px, 94%);
+    margin: 35px auto 70px;
+}
+
+/* PAGE INTRO */
+
+.page-heading {
+    margin-bottom: 25px;
+}
+
+.breadcrumb {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 11px;
+}
+
+.page-heading h1 {
+    font-size: clamp(27px, 4vw, 36px);
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.page-heading h1 span {
+    color: var(--red-light);
+}
+
+.page-description {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 10px 0 0;
+}
+
+/* STATISTICS */
+
+.statistics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 17px 18px;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.stat-value.red {
+    color: var(--red-light);
+}
+
+/* LEADERBOARD HEADER */
+
+.list-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 17px;
+}
+
+.list-heading h2 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.list-heading p {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 5px 0 0;
+}
+
+/* REFRESH BUTTON */
+
+.refresh-btn {
+    background: #292a32;
+    color: #f1f1f3;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.refresh-btn:hover {
+    background: #35191f;
+    border-color: var(--red);
+    color: white;
+}
+
+.refresh-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+/* TABLE */
+
+.table-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 600px;
+}
+
+thead {
+    background: #202127;
+}
+
+th {
+    padding: 14px 17px;
+    color: #aeb0ba;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+}
+
+td {
+    padding: 14px 17px;
+    border-top: 1px solid #292a32;
+    font-size: 13px;
+}
+
+tbody tr {
+    transition: background 0.15s;
+}
+
+tbody tr:hover {
+    background: #22232b;
+}
+
+tbody tr.top-three {
+    background: #1d191e;
+}
+
+tbody tr.top-three:hover {
+    background: #282027;
+}
+
+.rank {
+    color: var(--red-light);
+    font-weight: 800;
+    width: 85px;
+}
+
+.rank.first {
+    color: var(--gold);
+    font-weight: 900;
+}
+
+.rank.second {
+    color: #c5c8d2;
+}
+
+.rank.third {
+    color: #c99470;
+}
+
+.player-name {
+    color: #f2f2f4;
+    font-weight: 700;
+}
+
+.player-name.first-place {
+    color: var(--gold);
+    font-weight: 900;
+}
+
+.levels {
+    color: #b0b1ba;
+}
+
+.points {
+    color: var(--red-light);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.empty {
+    padding: 35px 15px;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.error {
+    color: #ff858b;
+}
+
+/* LAST UPDATED */
+
+#status {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 15px;
+}
+
+/* FOOTER */
+
+footer {
+    border-top: 1px solid var(--border);
+    background: #14151a;
+    padding: 25px 15px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+footer strong {
+    color: #e5e5e9;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 750px) {
+    .statistics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header-inner {
+        padding: 18px;
+    }
+
+    .nav-inner {
+        padding: 8px 18px;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    nav a {
+        padding: 10px 2px;
+    }
+
+    nav a.admin-link {
+        padding: 9px 13px;
+    }
+
+    main {
+        margin-top: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-name {
+        font-size: 17px;
+    }
+
+    .brand-icon {
+        width: 37px;
+        height: 37px;
+    }
+
+    .system-status {
+        font-size: 9px;
+    }
+
+    .list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .statistics {
+        gap: 9px;
+    }
+
+    .stat-card {
+        padding: 14px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .nav-inner {
+        gap: 13px;
+    }
+
+    nav a {
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-inner">
+
+        <div class="brand">
+            <div class="brand-icon">Y</div>
+
+            <div>
+                <div class="brand-name">
+                    YBC<span>NETWORK</span>
+                </div>
+                <div class="brand-subtitle">
+                    CHALLENGE RANKING SYSTEM
+                </div>
+            </div>
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            <span id="connection-status">CONNECTING</span>
+        </div>
+
+    </div>
+</header>
+
+<nav>
+    <div class="nav-inner">
+        <a href="leaderboard.html">List</a>
+        <a href="players.html" class="active">Players</a>
+        <a href="rules.html">Rules</a>
+        <a href="index.html">Home</a>
+        <a href="admin.html" class="admin-link">Admin Panel</a>
+    </div>
+</nav>
+
+<main>
+
+    <section class="page-heading">
+        <div class="breadcrumb">YBC Network / YBCCL / Players</div>
+
+        <h1>Player <span>Rankings</span></h1>
+
+        <p class="page-description">
+            Compete, complete and climb the rankings.
+            Players are ranked according to their total verified YBCCL points.
+        </p>
+    </section>
+
+    <section class="statistics">
+
+        <div class="stat-card">
+            <div class="stat-label">Registered Players</div>
+            <div class="stat-value" id="playerCount">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Completions</div>
+            <div class="stat-value red" id="completionCount">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Highest Score</div>
+            <div class="stat-value" id="topScore">—</div>
+        </div>
+
+    </section>
+
+    <section>
+
+        <div class="list-heading">
+
+            <div>
+                <h2>Player Leaderboard</h2>
+                <p>Ranked by total verified YBCCL points.</p>
+            </div>
+
+            <button class="refresh-btn" id="refresh">
+                ↻ Refresh
+            </button>
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Levels Beaten</th>
+                        <th>Total Points</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rankings">
+                    <tr>
+                        <td colspan="4" class="empty">
+                            Loading player rankings...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <p id="status">Connecting to YBCCL...</p>
+
+    </section>
+
+</main>
+
+<footer>
+    <strong>YBC Challenge List</strong><br>
+    Part of the YBC Network · Community-run Geometry Dash rankings
+</footer>
+
+<script>
+
+// SUPABASE CONNECTION
+
+const SUPABASE_URL =
+    "https://hdsorzrcvvyakckbgegk.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+// ELEMENTS
+
+const status = document.getElementById("status");
+const body = document.getElementById("rankings");
+const refreshButton = document.getElementById("refresh");
+const connectionStatus = document.getElementById("connection-status");
+
+// LOAD PLAYER LEADERBOARD
+
+async function loadLeaderboard() {
+
+    status.textContent = "Loading leaderboard...";
+
+    body.innerHTML = `
+        <tr>
+            <td colspan="4" class="empty">
+                Loading player rankings...
+            </td>
+        </tr>
+    `;
+
+    refreshButton.disabled = true;
+
+    try {
+
+        const { data, error } = await db
+            .from("ybccl_player_scores")
+            .select("id,username,levels_beaten,total_points")
+            .order("total_points", { ascending: false })
+            .order("username", { ascending: true });
+
+        if (error) throw error;
+
+        const players = data || [];
+
+        // UPDATE STATISTICS
+
+        document.getElementById("playerCount").textContent =
+            players.length.toLocaleString("en-GB");
+
+        document.getElementById("completionCount").textContent =
+            players.reduce(
+                (sum, player) =>
+                    sum + Number(player.levels_beaten || 0),
+                0
+            ).toLocaleString("en-GB");
+
+        document.getElementById("topScore").textContent =
+            players.length
+                ? Number(players[0].total_points || 0)
+                    .toLocaleString("en-GB")
+                : "0";
+
+        // EMPTY LEADERBOARD
+
+        if (!players.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty">
+                        No players yet. Check back soon!
+                    </td>
+                </tr>
+            `;
+
+            connectionStatus.textContent = "SYSTEM ONLINE";
+            status.textContent = "Leaderboard updated.";
+
+            return;
+        }
+
+        // RENDER PLAYERS
+
+        body.innerHTML = "";
+
+        players.forEach((player, index) => {
+
+            const tr = document.createElement("tr");
+
+            if (index < 3) {
+                tr.classList.add("top-three");
+            }
+
+            const rank = document.createElement("td");
+            rank.className = "rank";
+
+            if (index === 0) rank.classList.add("first");
+            if (index === 1) rank.classList.add("second");
+            if (index === 2) rank.classList.add("third");
+
+            rank.textContent = "#" + (index + 1);
+
+            const username = document.createElement("td");
+            username.className = "player-name";
+
+            if (index === 0) {
+                username.classList.add("first-place");
+            }
+
+            username.textContent = player.username || "Unknown";
+
+            const levels = document.createElement("td");
+            levels.className = "levels";
+            levels.textContent = Number(
+                player.levels_beaten || 0
+            ).toLocaleString("en-GB");
+
+            const points = document.createElement("td");
+            points.className = "points";
+            points.textContent = Number(
+                player.total_points || 0
+            ).toLocaleString("en-GB");
+
+            tr.append(rank, username, levels, points);
+
+            body.appendChild(tr);
+
+        });
+
+        connectionStatus.textContent = "SYSTEM ONLINE";
+
+        status.textContent =
+            "Last updated: " +
+            new Date().toLocaleTimeString("en-GB");
+
+    } catch (error) {
+
+        console.error("YBCCL player leaderboard error:", error);
+
+        connectionStatus.textContent = "CONNECTION ERROR";
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty error">
+                    Could not load the player leaderboard.
+                </td>
+            </tr>
+        `;
+
+        status.textContent = "Error: " + error.message;
+
+    } finally {
+
+        refreshButton.disabled = false;
+
+    }
+
+}
+
+// MANUAL REFRESH
+
+refreshButton.addEventListener("click", loadLeaderboard);
+
+// INITIAL LOAD
+
+loadLeaderboard();
+
+// AUTOMATIC REFRESH EVERY 30 SECONDS
+
+setInterval(loadLeaderboard, 30000);
+
+</script>
+
+</body>
+</html>

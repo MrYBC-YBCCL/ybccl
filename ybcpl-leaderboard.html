@@ -1,0 +1,454 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Leaderboard | YBCPL</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #101116;
+    color: white;
+}
+
+header {
+    background: #17181f;
+    border-bottom: 2px solid #d83232;
+    padding: 20px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.logo {
+    color: #ff4545;
+    font-size: 25px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+nav a:hover, nav a.active {
+    background: #d83232;
+    color: white;
+}
+
+.container {
+    width: 90%;
+    max-width: 1150px;
+    margin: 40px auto;
+}
+
+.hero {
+    background: linear-gradient(135deg, #251719, #171820);
+    border: 1px solid #392326;
+    border-left: 5px solid #e33b3b;
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    font-size: 35px;
+    margin: 0 0 12px;
+}
+
+.hero h1 span {
+    color: #ff4545;
+}
+
+.hero p {
+    color: #aaa;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.section {
+    background: #191a22;
+    border: 1px solid #292a34;
+    border-radius: 9px;
+    padding: 22px;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.search {
+    width: 100%;
+    max-width: 330px;
+    background: #101116;
+    border: 1px solid #383943;
+    color: white;
+    padding: 12px 14px;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+}
+
+.search:focus {
+    border-color: #e33b3b;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th {
+    text-align: left;
+    color: #999;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 14px;
+    border-bottom: 1px solid #343540;
+}
+
+td {
+    padding: 17px 14px;
+    border-bottom: 1px solid #292a34;
+    font-size: 14px;
+}
+
+tbody tr:hover {
+    background: #22232d;
+}
+
+.rank {
+    color: #ff4545;
+    font-weight: bold;
+}
+
+.points {
+    color: #ff5555;
+    font-weight: bold;
+}
+
+.player-name {
+    font-weight: bold;
+}
+
+.discord {
+    color: #999;
+}
+
+.loading, .empty, .error {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
+
+.error {
+    color: #ff6666;
+}
+
+.back {
+    display: inline-block;
+    color: #ff5555;
+    text-decoration: none;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.back:hover {
+    text-decoration: underline;
+}
+
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-size: 13px;
+    border-top: 1px solid #292a34;
+    margin-top: 50px;
+}
+
+@media (max-width: 650px) {
+    header {
+        padding: 18px 5%;
+    }
+
+    .container {
+        width: 94%;
+        margin-top: 25px;
+    }
+
+    .hero {
+        padding: 23px;
+    }
+
+    .hero h1 {
+        font-size: 28px;
+    }
+
+    .section {
+        padding: 15px;
+    }
+
+    .section-heading {
+        align-items: stretch;
+    }
+
+    .search {
+        max-width: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a class="logo" href="ybcpl.html">YBCPL</a>
+
+    <nav>
+        <a href="index.html">YBCCL</a>
+        <a href="ybcpl.html">Platformer</a>
+        <a href="ybcpl-leaderboard.html" class="active">Players</a>
+        <a href="spam.html">Spam List</a>
+    </nav>
+</header>
+
+<main class="container">
+
+    <a href="ybcpl.html" class="back">← Back to YBCPL</a>
+
+    <section class="hero">
+        <h1>Player <span>Leaderboard</span></h1>
+        <p>
+            Compete against other players by completing ranked YBCPL
+            challenges. Verified completions award points based on
+            each challenge's current position.
+        </p>
+    </section>
+
+    <section class="section">
+        <div class="section-heading">
+            <h2><span style="color:#ff4545">YBCPL</span> Players</h2>
+
+            <input
+                type="text"
+                id="search"
+                class="search"
+                placeholder="Search players..."
+            >
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Discord</th>
+                        <th>Completions</th>
+                        <th>Total Points</th>
+                    </tr>
+                </thead>
+
+                <tbody id="playerTable">
+                    <tr>
+                        <td colspan="5" class="loading">
+                            Loading player leaderboard...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    YBC Platformer List · Part of the YBC community
+</footer>
+
+<script>
+const SUPABASE_URL = "https://hdsorzrcvvyakckbgegk.supabase.co";
+const SUPABASE_KEY = "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+let players = [];
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function getField(player, names, fallback = 0) {
+    for (const name of names) {
+        if (player[name] !== undefined && player[name] !== null) {
+            return player[name];
+        }
+    }
+
+    return fallback;
+}
+
+function renderPlayers() {
+    const search = document.getElementById("search")
+        .value.trim().toLowerCase();
+
+    const filtered = players.filter(player => {
+        const name = String(getField(
+            player, ["player_name", "name"], ""
+        )).toLowerCase();
+
+        const discord = String(getField(
+            player, ["discord_username", "discord"], ""
+        )).toLowerCase();
+
+        return name.includes(search) || discord.includes(search);
+    });
+
+    const tbody = document.getElementById("playerTable");
+
+    if (!filtered.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    No players found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map((player, index) => {
+        const name = getField(
+            player, ["player_name", "name"], "Unknown"
+        );
+
+        const discord = getField(
+            player, ["discord_username", "discord"], "Not provided"
+        );
+
+        const completions = getField(
+            player,
+            ["verified_completions", "completed_levels", "completions"],
+            0
+        );
+
+        const points = getField(
+            player,
+            ["total_points", "points", "total_score", "score"],
+            0
+        );
+
+        return `
+            <tr>
+                <td class="rank">#${index + 1}</td>
+                <td class="player-name">${escapeHTML(name)}</td>
+                <td class="discord">${escapeHTML(discord)}</td>
+                <td>${Number(completions).toLocaleString()}</td>
+                <td class="points">
+                    ${Number(points).toLocaleString()}
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
+async function loadPlayers() {
+    const tbody = document.getElementById("playerTable");
+
+    const { data, error } = await db
+        .from("ybcpl_player_scores")
+        .select("*");
+
+    if (error) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="error">
+                    Couldn't load players: ${escapeHTML(error.message)}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    players = (data || []).sort((a, b) => {
+        const pointsA = Number(getField(
+            a, ["total_points", "points", "total_score", "score"]
+        ));
+
+        const pointsB = Number(getField(
+            b, ["total_points", "points", "total_score", "score"]
+        ));
+
+        if (pointsB !== pointsA) {
+            return pointsB - pointsA;
+        }
+
+        const completionsA = Number(getField(
+            a, ["verified_completions", "completed_levels", "completions"]
+        ));
+
+        const completionsB = Number(getField(
+            b, ["verified_completions", "completed_levels", "completions"]
+        ));
+
+        return completionsB - completionsA;
+    });
+
+    renderPlayers();
+}
+
+document.getElementById("search").addEventListener(
+    "input",
+    renderPlayers
+);
+
+loadPlayers();
+</script>
+
+</body>
+</html>

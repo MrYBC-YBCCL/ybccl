@@ -1,0 +1,959 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YBCSPCL | Spam Challenge Rankings</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+    --bg: #101115;
+    --panel: #18191f;
+    --panel-light: #202127;
+    --border: #303139;
+    --red: #d93640;
+    --red-light: #f0525c;
+    --text: #f1f1f3;
+    --muted: #92939d;
+    --green: #55c98a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* HEADER */
+
+header {
+    background: #14151a;
+    border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+    max-width: 1250px;
+    margin: auto;
+    padding: 23px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 43px;
+    height: 43px;
+    background: var(--red);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    font-weight: 900;
+    color: white;
+}
+
+.brand-name {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -0.7px;
+}
+
+.brand-name span {
+    color: var(--red-light);
+}
+
+.brand-subtitle {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1.3px;
+    margin-top: 4px;
+}
+
+.system-status {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+}
+
+/* NAVIGATION */
+
+nav {
+    background: #18191f;
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+    max-width: 1250px;
+    margin: auto;
+    padding: 0 25px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+nav a {
+    display: inline-block;
+    padding: 16px 2px;
+    color: #aeb0ba;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+}
+
+nav a:hover {
+    color: white;
+}
+
+nav a.active {
+    color: white;
+    border-bottom-color: var(--red);
+}
+
+/* ADMIN BUTTON */
+
+nav a.admin-link {
+    margin: 7px 0;
+    padding: 10px 17px;
+    border: 1px solid #ff6871;
+    border-radius: 5px;
+    color: white;
+    background: linear-gradient(
+        135deg,
+        #ff6871 0%,
+        #e32636 45%,
+        #a90f20 100%
+    );
+    box-shadow:
+        0 0 8px rgba(255, 55, 70, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+nav a.admin-link:hover {
+    color: white;
+    background: linear-gradient(
+        135deg,
+        #ff8990 0%,
+        #ff3045 45%,
+        #c41428 100%
+    );
+    box-shadow:
+        0 0 15px rgba(255, 55, 70, 0.75),
+        0 0 25px rgba(255, 55, 70, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+/* MAIN */
+
+main {
+    width: min(1150px, 94%);
+    margin: 35px auto 70px;
+}
+
+/* PAGE INTRO */
+
+.page-heading {
+    margin-bottom: 25px;
+}
+
+.breadcrumb {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 11px;
+}
+
+.page-heading h1 {
+    font-size: clamp(27px, 4vw, 36px);
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.page-heading h1 span {
+    color: var(--red-light);
+}
+
+.page-description {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 10px 0 0;
+}
+
+/* STATISTICS */
+
+.statistics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 17px 18px;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.stat-value.red {
+    color: var(--red-light);
+}
+
+/* LEADERBOARD */
+
+.list-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 17px;
+}
+
+.list-heading h2 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.list-heading p {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 5px 0 0;
+}
+
+.list-count {
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* FILTERS */
+
+.filters {
+    display: flex;
+    gap: 7px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 17px;
+}
+
+.filter-btn {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    padding: 12px 17px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+}
+
+.filter-btn:hover {
+    color: white;
+}
+
+.filter-btn.active {
+    color: white;
+    border-bottom-color: var(--red);
+}
+
+/* SEARCH */
+
+.toolbar {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.search-wrap {
+    width: 100%;
+    position: relative;
+}
+
+.search-wrap span {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+}
+
+#search {
+    width: 100%;
+    padding: 13px 15px 13px 42px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: 0.2s;
+}
+
+#search:focus {
+    border-color: var(--red);
+}
+
+#search::placeholder {
+    color: #777984;
+}
+
+/* TABLE */
+
+.table-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 700px;
+}
+
+thead {
+    background: #202127;
+}
+
+th {
+    padding: 14px 17px;
+    color: #aeb0ba;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+}
+
+td {
+    padding: 14px 17px;
+    border-top: 1px solid #292a32;
+    font-size: 13px;
+}
+
+tbody tr {
+    transition: background 0.15s;
+}
+
+tbody tr:hover {
+    background: #22232b;
+}
+
+tbody tr.top-three {
+    background: #1d191e;
+}
+
+tbody tr.top-three:hover {
+    background: #282027;
+}
+
+.rank {
+    color: var(--red-light);
+    font-weight: 800;
+    width: 75px;
+}
+
+.rank-top {
+    color: #ff6871;
+}
+
+.level-link {
+    color: #f2f2f4;
+    font-weight: 700;
+}
+
+.creator,
+.verifier {
+    color: #b0b1ba;
+}
+
+.points {
+    color: #f0525c;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.legacy-badge {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: #332b38;
+    color: #d2b8e3;
+    font-size: 9px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.status {
+    padding: 35px 15px;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.error {
+    color: #ff858b;
+}
+
+/* FOOTER */
+
+footer {
+    border-top: 1px solid var(--border);
+    background: #14151a;
+    padding: 25px 15px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+footer strong {
+    color: #e5e5e9;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 750px) {
+    .statistics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header-inner {
+        padding: 18px;
+    }
+
+    .nav-inner {
+        padding: 8px 18px;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    nav a {
+        padding: 10px 2px;
+    }
+
+    nav a.admin-link {
+        padding: 9px 13px;
+    }
+
+    main {
+        margin-top: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-name {
+        font-size: 17px;
+    }
+
+    .brand-icon {
+        width: 37px;
+        height: 37px;
+    }
+
+    .system-status {
+        font-size: 9px;
+    }
+
+    .filters {
+        gap: 0;
+    }
+
+    .filter-btn {
+        padding: 12px 11px;
+        font-size: 11px;
+    }
+
+    .list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .nav-inner {
+        gap: 13px;
+    }
+
+    nav a {
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-inner">
+        <div class="brand">
+            <div class="brand-icon">Y</div>
+            <div>
+                <div class="brand-name">YBC<span>NETWORK</span></div>
+                <div class="brand-subtitle">CHALLENGE RANKING SYSTEM</div>
+            </div>
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            <span id="connection-status">CONNECTING</span>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-inner">
+        <a href="spam.html" class="active">List</a>
+        <a href="spam-player-leaderboard.html">Players</a>
+        <a href="spam-rules.html">Rules</a>
+        <a href="index.html">Home</a>
+        <a href="spam-admin.html" class="admin-link">Admin Panel</a>
+    </div>
+</nav>
+
+<main>
+
+    <section class="page-heading">
+        <div class="breadcrumb">YBC Network / Lists / YBCSPCL</div>
+
+        <h1>YBC <span>Spam Challenge List</span></h1>
+
+        <p class="page-description">
+            The official YBC Spam Challenge List. Browse the ranked Geometry Dash
+            spam challenges, their creators, verifiers and awarded points.
+        </p>
+    </section>
+
+    <section class="statistics">
+
+        <div class="stat-card">
+            <div class="stat-label">Total Challenges</div>
+            <div class="stat-value" id="total-count">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Main List</div>
+            <div class="stat-value red" id="main-count">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Extended List</div>
+            <div class="stat-value" id="extended-count">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Legacy List</div>
+            <div class="stat-value" id="legacy-count">—</div>
+        </div>
+
+    </section>
+
+    <section>
+
+        <div class="list-heading">
+            <div>
+                <h2>Challenge Rankings</h2>
+                <p>Browse challenges by their current ranking.</p>
+            </div>
+
+            <div class="list-count" id="count">
+                Loading challenges...
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="main">MAIN</button>
+            <button class="filter-btn" data-filter="extended">EXTENDED</button>
+            <button class="filter-btn" data-filter="legacy">LEGACY</button>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-wrap">
+                <span>⌕</span>
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Search challenges, creators, verifiers or ranks..."
+                    autocomplete="off"
+                    aria-label="Search challenges"
+                >
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Challenge</th>
+                        <th>Creator</th>
+                        <th>Verifier</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+
+                <tbody id="levels-table">
+                    <tr>
+                        <td colspan="5" class="status">
+                            Connecting to the YBCSPCL database...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <strong>YBC Spam Challenge List</strong><br>
+    Part of the YBC Network · Community-run Geometry Dash rankings
+</footer>
+
+<script>
+(function () {
+    "use strict";
+
+    // SUPABASE CONNECTION
+
+    const SUPABASE_URL =
+        "https://hdsorzrcvvyakckbgegk.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+    const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+    // ELEMENTS
+
+    const tableBody = document.getElementById("levels-table");
+    const searchInput = document.getElementById("search");
+    const countLabel = document.getElementById("count");
+    const connectionStatus = document.getElementById("connection-status");
+
+    let levels = [];
+    let activeFilter = "main";
+
+    // POINTS SYSTEM
+    // #1 = 1000
+    // #50 = 10
+    // #51+ = 0
+    // Legacy = 0
+
+    function getPoints(level) {
+        const position = Number(level.position);
+
+        if (
+            level.is_legacy === true ||
+            !Number.isInteger(position) ||
+            position < 1 ||
+            position > 50
+        ) {
+            return 0;
+        }
+
+        return Math.round(
+            1000 * Math.pow(
+                10 / 1000,
+                (position - 1) / 49
+            )
+        );
+    }
+
+    // DETERMINE LIST CATEGORY
+
+    function getCategory(level) {
+        const position = Number(level.position);
+
+        if (
+            level.is_legacy === true ||
+            !Number.isInteger(position) ||
+            position > 50 ||
+            position < 1
+        ) {
+            return "legacy";
+        }
+
+        if (position >= 26) {
+            return "extended";
+        }
+
+        return "main";
+    }
+
+    // CONNECTION STATUS
+
+    function setConnectionStatus(status, isError = false) {
+        connectionStatus.textContent = status;
+
+        connectionStatus.style.color = isError
+            ? "#ff858b"
+            : "#55c98a";
+    }
+
+    // STATISTICS
+
+    function updateStatistics() {
+        const main = levels.filter(
+            level => getCategory(level) === "main"
+        ).length;
+
+        const extended = levels.filter(
+            level => getCategory(level) === "extended"
+        ).length;
+
+        const legacy = levels.filter(
+            level => getCategory(level) === "legacy"
+        ).length;
+
+        document.getElementById("total-count").textContent =
+            levels.length;
+
+        document.getElementById("main-count").textContent =
+            main;
+
+        document.getElementById("extended-count").textContent =
+            extended;
+
+        document.getElementById("legacy-count").textContent =
+            legacy;
+    }
+
+    // SHOW TABLE STATUS
+
+    function showStatus(message, isError = false) {
+        tableBody.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 5;
+        cell.className = isError ? "status error" : "status";
+        cell.textContent = message;
+
+        row.appendChild(cell);
+        tableBody.appendChild(row);
+    }
+
+    // RENDER LEADERBOARD
+
+    function renderLevels() {
+        const query = searchInput.value.trim().toLowerCase();
+
+        const categoryLevels = levels.filter(
+            level => getCategory(level) === activeFilter
+        );
+
+        const filtered = categoryLevels.filter(level => {
+            return (
+                String(level.name ?? "").toLowerCase().includes(query) ||
+                String(level.creator ?? "").toLowerCase().includes(query) ||
+                String(level.verifier ?? "").toLowerCase().includes(query) ||
+                String(level.position ?? "").includes(query)
+            );
+        });
+
+        countLabel.textContent =
+            `Showing ${filtered.length} of ${categoryLevels.length} challenges`;
+
+        if (filtered.length === 0) {
+            showStatus(
+                levels.length === 0
+                    ? "No challenges have been added yet."
+                    : "No challenges match your search."
+            );
+            return;
+        }
+
+        tableBody.replaceChildren();
+
+        for (const level of filtered) {
+            const category = getCategory(level);
+            const row = document.createElement("tr");
+
+            const position = document.createElement("td");
+
+            position.className =
+                Number(level.position) <= 3 && category !== "legacy"
+                    ? "rank rank-top"
+                    : "rank";
+
+            position.textContent =
+                level.position == null
+                    ? "—"
+                    : "#" + level.position;
+
+            const name = document.createElement("td");
+
+            const nameText = document.createElement("span");
+            nameText.className = "level-link";
+            nameText.textContent = level.name || "Unnamed challenge";
+
+            name.appendChild(nameText);
+
+            if (category === "legacy") {
+                const badge = document.createElement("span");
+                badge.className = "legacy-badge";
+                badge.textContent = "LEGACY";
+                name.appendChild(badge);
+            }
+
+            const creator = document.createElement("td");
+            creator.className = "creator";
+            creator.textContent = level.creator || "Unknown";
+
+            const verifier = document.createElement("td");
+            verifier.className = "verifier";
+            verifier.textContent = level.verifier || "Unknown";
+
+            const points = document.createElement("td");
+            points.className = "points";
+            points.textContent =
+                getPoints(level).toLocaleString("en-GB");
+
+            if (
+                Number(level.position) <= 3 &&
+                category !== "legacy"
+            ) {
+                row.className = "top-three";
+            }
+
+            row.append(
+                position,
+                name,
+                creator,
+                verifier,
+                points
+            );
+
+            tableBody.appendChild(row);
+        }
+    }
+
+    // FILTER BUTTONS
+
+    document.querySelectorAll(".filter-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            document.querySelectorAll(".filter-btn").forEach(btn => {
+                btn.classList.remove("active");
+            });
+
+            button.classList.add("active");
+            activeFilter = button.dataset.filter;
+
+            renderLevels();
+        });
+    });
+
+    // LOAD CHALLENGES
+
+    async function loadChallenges() {
+        try {
+            const { data, error } = await supabaseClient
+                .from("ybcspcl_challenges")
+                .select("id, position, name, creator, verifier, is_legacy")
+                .order("position", {
+                    ascending: true,
+                    nullsFirst: false
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            levels = data || [];
+
+            setConnectionStatus("SYSTEM ONLINE");
+
+            updateStatistics();
+            renderLevels();
+
+        } catch (error) {
+            console.error("YBCSPCL database error:", error);
+
+            setConnectionStatus("CONNECTION ERROR", true);
+
+            document.getElementById("total-count").textContent = "—";
+            document.getElementById("main-count").textContent = "—";
+            document.getElementById("extended-count").textContent = "—";
+            document.getElementById("legacy-count").textContent = "—";
+
+            showStatus(
+                "Couldn't load challenges. Check the database connection and permissions, then refresh.",
+                true
+            );
+
+            countLabel.textContent = "Database connection failed";
+        }
+    }
+
+    // SEARCH
+
+    searchInput.addEventListener("input", renderLevels);
+
+    // INITIAL LOAD
+
+    loadChallenges();
+
+    // AUTOMATIC REFRESH EVERY 30 SECONDS
+
+    setInterval(loadChallenges, 30000);
+
+})();
+</script>
+
+</body>
+</html>

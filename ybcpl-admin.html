@@ -1,0 +1,1228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YBCPL Admin Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 24px;
+    background: #101010;
+    color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+
+.container { max-width: 1100px; margin: auto; width: 100%; }
+h1 { color: #ff4545; margin-bottom: 5px; }
+h2 { margin-top: 0; }
+.muted { color: #aaa; }
+
+.panel {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 20px 0;
+}
+
+input, textarea, select, button {
+    width: 100%;
+    padding: 12px;
+    margin: 7px 0;
+    border-radius: 7px;
+    font-size: 15px;
+    font-family: inherit;
+}
+
+input, textarea, select {
+    background: #111;
+    color: white;
+    border: 1px solid #444;
+}
+
+textarea { min-height: 90px; resize: vertical; }
+
+button {
+    border: none;
+    background: #e83b3b;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover { background: #ff5050; }
+button.secondary { background: #383838; }
+button.delete { background: #8d2020; }
+button:disabled { opacity: .5; cursor: wait; }
+
+label {
+    display: block;
+    margin-top: 9px;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+}
+
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0;
+}
+
+.nav button { width: auto; padding: 11px 17px; }
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.tabs button { width: auto; }
+.tabs button.active { background: #a92828; }
+
+.challenge, .completion {
+    background: #252525;
+    padding: 14px;
+    margin: 10px 0;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 65px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.position {
+    color: #ff5555;
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.challenge-name, .completion-name {
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.details {
+    color: #aaa;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 5px;
+    overflow-wrap: anywhere;
+}
+
+.actions { display: flex; gap: 6px; }
+.actions button { width: auto; padding: 10px; margin: 0; }
+
+.points {
+    color: #ff7777;
+    font-weight: bold;
+}
+
+.status-pending { color: #ffb347; }
+.status-verified { color: #80e6a0; }
+
+.hint {
+    background: #292020;
+    border-left: 3px solid #e83b3b;
+    padding: 12px;
+    color: #ddd;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.section-label {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #ff7777;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.checkbox-row input {
+    width: auto;
+    margin: 0;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.stat {
+    background: #252525;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.stat strong {
+    display: block;
+    color: #ff5555;
+    font-size: 25px;
+    margin-top: 6px;
+}
+
+#message, #loginMessage {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.error { color: #ff7070; }
+.success { color: #80e6a0; }
+
+[hidden] { display: none !important; }
+
+@media(max-width: 650px) {
+    body { padding: 12px; }
+    .panel { padding: 15px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr; }
+    .challenge, .completion {
+        grid-template-columns: 42px minmax(0, 1fr);
+    }
+    .actions { grid-column: 2; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>YBCPL Admin Panel</h1>
+<p class="muted">YBC Platformer List management</p>
+
+<!-- LOGIN -->
+
+<div id="loginPanel" class="panel">
+    <h2>Admin Login</h2>
+
+    <form id="loginForm">
+        <label>Email</label>
+        <input id="email" type="email" required placeholder="Admin email">
+
+        <label>Password</label>
+        <input id="password" type="password" required placeholder="Password">
+
+        <button id="loginButton" type="submit">Log In</button>
+    </form>
+
+    <p id="loginMessage"></p>
+</div>
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" hidden>
+
+    <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+                <h2>Dashboard</h2>
+                <p id="account" class="muted"></p>
+            </div>
+
+            <button id="logoutButton" class="secondary" style="width:auto">
+                Log Out
+            </button>
+        </div>
+
+        <div class="nav">
+            <button class="secondary" onclick="location.href='ybcpl.html'">
+                Public YBCPL
+            </button>
+
+            <button class="secondary" onclick="location.href='ybcpl-leaderboard.html'">
+                Player Leaderboard
+            </button>
+
+            <button class="secondary" onclick="location.href='admin.html'">
+                YBCCL Admin
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                Challenges
+                <strong id="challengeCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Players
+                <strong id="playerCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Verified completions
+                <strong id="completionCount">0</strong>
+            </div>
+        </div>
+
+        <p id="message" role="status"></p>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+
+    <div class="tabs">
+        <button id="challengesTab" class="active" type="button"
+            onclick="showSection('challenges')">
+            Challenges
+        </button>
+
+        <button id="completionsTab" type="button"
+            onclick="showSection('completions')">
+            Player Completions
+        </button>
+    </div>
+
+    <!-- CHALLENGES SECTION -->
+
+    <section id="challengesSection">
+
+        <div class="panel" id="editorPanel">
+            <h2 id="editorTitle">Add a Platformer Challenge</h2>
+
+            <p class="hint">
+                Adding a challenge at an occupied position moves the other
+                challenges down. Moving a challenge automatically rearranges
+                the leaderboard and recalculates everyone's points.
+            </p>
+
+            <form id="challengeForm">
+
+                <div class="form-grid">
+
+                    <div>
+                        <label>Position</label>
+                        <input id="position" type="number" min="1" step="1" required>
+                    </div>
+
+                    <div>
+                        <label>Challenge name</label>
+                        <input id="name" maxlength="200" required>
+                    </div>
+
+                    <div>
+                        <label>Creator</label>
+                        <input id="creator" maxlength="200" required>
+                    </div>
+
+                    <div>
+                        <label>Verifier</label>
+                        <input id="verifier" maxlength="200" required>
+                    </div>
+
+                    <div>
+                        <label>Geometry Dash level ID</label>
+                        <input id="levelId" maxlength="100">
+                    </div>
+
+                    <div>
+                        <label>Enjoyment rating (0–100)</label>
+                        <input id="rating" type="number" min="0" max="100" step="1">
+                    </div>
+
+                </div>
+
+                <label>Challenge description</label>
+                <textarea id="description" maxlength="10000"></textarea>
+
+                <label>Verifier's note</label>
+                <textarea id="verifierNote" maxlength="10000"></textarea>
+
+                <p id="pointsPreview" class="points">Points: 1000</p>
+
+                <button id="saveButton" type="submit">Add Challenge</button>
+
+                <button id="cancelButton" type="button"
+                    class="secondary" hidden>
+                    Cancel Editing
+                </button>
+
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Current Platformer Challenges</h2>
+            <div id="challengeList">Loading challenges...</div>
+        </div>
+
+    </section>
+
+    <!-- COMPLETIONS SECTION -->
+
+    <section id="completionsSection" hidden>
+
+        <div class="panel">
+            <h2>Add a Player Completion</h2>
+
+            <p class="hint">
+                Enter a player's details and select the platformer they
+                completed. You can immediately verify the completion or
+                leave it pending.
+            </p>
+
+            <form id="completionForm">
+
+                <label>Player name</label>
+                <input id="playerName" maxlength="100" required
+                    placeholder="Geometry Dash username">
+
+                <label>Discord username</label>
+                <input id="discordName" maxlength="100"
+                    placeholder="Discord username (optional)">
+
+                <label>Completed challenge</label>
+                <select id="completionChallenge" required>
+                    <option value="">Loading challenges...</option>
+                </select>
+
+                <label class="checkbox-row">
+                    <input id="verifyImmediately" type="checkbox" checked>
+                    Mark completion as verified immediately
+                </label>
+
+                <button id="addCompletionButton" type="submit">
+                    Add Completion
+                </button>
+
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Completion Records</h2>
+
+            <div class="tabs">
+                <button id="allCompletionsTab" class="active"
+                    onclick="setCompletionFilter('all')">
+                    All
+                </button>
+
+                <button id="pendingTab"
+                    onclick="setCompletionFilter('pending')">
+                    Pending
+                </button>
+
+                <button id="verifiedTab"
+                    onclick="setCompletionFilter('verified')">
+                    Verified
+                </button>
+            </div>
+
+            <div id="completionList">Loading completions...</div>
+        </div>
+
+    </section>
+
+</div>
+</div>
+
+<script>
+
+// ==========================================
+// SUPABASE CONNECTION
+// ==========================================
+
+const SUPABASE_URL = "https://hdsorzrcvvyakckbgegk.supabase.co";
+const SUPABASE_KEY = "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+
+let challenges = [];
+let completions = [];
+let editingId = null;
+let currentUserId = null;
+let busy = false;
+let completionFilter = "all";
+
+// ==========================================
+// POINTS
+// ==========================================
+
+const pointsTable = [
+    1000,967,934,902,870,839,808,778,748,718,
+    689,661,633,605,578,552,526,500,475,451,
+    427,403,380,358,336,315,294,274,255,236,
+    217,200,183,166,150,135,121,107,94,82,
+    70,60,50,41,33,26,20,15,12,10
+];
+
+function pointsFor(position) {
+    return position >= 1 && position <= 50
+        ? pointsTable[position - 1]
+        : 0;
+}
+
+function updatePointsPreview() {
+    const position = Number($("position").value);
+
+    $("pointsPreview").textContent =
+        Number.isInteger(position) && position > 0
+            ? `Points: ${pointsFor(position).toLocaleString()}`
+            : "Points: —";
+}
+
+$("position").addEventListener("input", updatePointsPreview);
+
+// ==========================================
+// MESSAGES
+// ==========================================
+
+function showMessage(message, type = "") {
+    $("message").textContent = message;
+    $("message").className = type;
+}
+
+function setBusy(value) {
+    busy = value;
+
+    [
+        "saveButton",
+        "addCompletionButton",
+        "logoutButton",
+        "cancelButton"
+    ].forEach(id => {
+        $(id).disabled = value;
+    });
+}
+
+// ==========================================
+// SECTION NAVIGATION
+// ==========================================
+
+function showSection(section) {
+    $("challengesSection").hidden = section !== "challenges";
+    $("completionsSection").hidden = section !== "completions";
+
+    $("challengesTab").classList.toggle("active", section === "challenges");
+    $("completionsTab").classList.toggle("active", section === "completions");
+
+    if (section === "completions") {
+        loadCompletions();
+        loadPlayersCount();
+    }
+}
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+
+async function checkAdmin() {
+    const { data: { session }, error } = await db.auth.getSession();
+
+    if (error) throw error;
+
+    if (!session) {
+        $("loginPanel").hidden = false;
+        $("dashboard").hidden = true;
+        currentUserId = null;
+        return false;
+    }
+
+    const { data: isAdmin, error: adminError } =
+        await db.rpc("is_ybcc_admin");
+
+    if (adminError) throw adminError;
+
+    if (isAdmin !== true) {
+        await db.auth.signOut();
+        throw new Error("This account is not authorised as a YBCCL admin.");
+    }
+
+    currentUserId = session.user.id;
+
+    $("loginPanel").hidden = true;
+    $("dashboard").hidden = false;
+    $("account").textContent = session.user.email || "Signed in";
+
+    await loadChallenges();
+    await loadPlayersCount();
+    await loadCompletions();
+
+    return true;
+}
+
+$("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    $("loginMessage").textContent = "";
+    $("loginButton").disabled = true;
+
+    try {
+        const { error } = await db.auth.signInWithPassword({
+            email: $("email").value.trim(),
+            password: $("password").value
+        });
+
+        if (error) throw error;
+
+        await checkAdmin();
+
+    } catch (error) {
+        $("loginMessage").textContent = error.message;
+        $("loginMessage").className = "error";
+
+    } finally {
+        $("loginButton").disabled = false;
+    }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+        showMessage(error.message, "error");
+        return;
+    }
+
+    currentUserId = null;
+    $("loginPanel").hidden = false;
+    $("dashboard").hidden = true;
+    $("password").value = "";
+});
+
+// ==========================================
+// LOAD CHALLENGES
+// ==========================================
+
+async function loadChallenges() {
+    $("challengeList").textContent = "Loading challenges...";
+
+    const { data, error } = await db
+        .from("ybcpl_challenges")
+        .select("*")
+        .order("position", { ascending: true });
+
+    if (error) {
+        $("challengeList").textContent = "Could not load challenges.";
+        showMessage(error.message, "error");
+        return;
+    }
+
+    challenges = data || [];
+
+    $("challengeCount").textContent = challenges.length;
+
+    renderChallenges();
+    populateChallengeSelect();
+}
+
+function renderChallenges() {
+    const list = $("challengeList");
+    list.replaceChildren();
+
+    if (!challenges.length) {
+        list.textContent = "No platformer challenges have been added yet.";
+        return;
+    }
+
+    for (const challenge of challenges) {
+        const card = document.createElement("div");
+        card.className = "challenge";
+
+        const position = document.createElement("div");
+        position.className = "position";
+        position.textContent = "#" + challenge.position;
+
+        const info = document.createElement("div");
+
+        const name = document.createElement("div");
+        name.className = "challenge-name";
+        name.textContent = challenge.name;
+
+        const details = document.createElement("div");
+        details.className = "details";
+
+        details.textContent =
+            `Creator: ${challenge.creator} · ` +
+            `Verifier: ${challenge.verifier} · ` +
+            `${Number(challenge.points).toLocaleString()} points · ` +
+            `${challenge.enjoyment_rating == null
+                ? "Not rated"
+                : challenge.enjoyment_rating + "/100 enjoyment"} · ` +
+            `Level ID: ${challenge.level_id || "Not set"}`;
+
+        info.append(name, details);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "secondary";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => startEditing(challenge));
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete";
+        remove.textContent = "Delete";
+        remove.addEventListener("click", () => deleteChallenge(challenge));
+
+        actions.append(edit, remove);
+        card.append(position, info, actions);
+        list.append(card);
+    }
+}
+
+// ==========================================
+// CHALLENGE EDITING
+// ==========================================
+
+function startEditing(challenge) {
+    if (busy) return;
+
+    editingId = challenge.id;
+
+    $("position").value = challenge.position;
+    $("name").value = challenge.name || "";
+    $("creator").value = challenge.creator || "";
+    $("verifier").value = challenge.verifier || "";
+    $("levelId").value = challenge.level_id || "";
+    $("rating").value = challenge.enjoyment_rating ?? "";
+    $("description").value = challenge.description || "";
+    $("verifierNote").value = challenge.verifier_note || "";
+
+    $("editorTitle").textContent = `Edit Challenge #${challenge.position}`;
+    $("saveButton").textContent = "Save Changes";
+    $("cancelButton").hidden = false;
+
+    updatePointsPreview();
+    $("editorPanel").scrollIntoView({ behavior: "smooth" });
+}
+
+function resetEditor() {
+    editingId = null;
+
+    $("challengeForm").reset();
+    $("editorTitle").textContent = "Add a Platformer Challenge";
+    $("saveButton").textContent = "Add Challenge";
+    $("cancelButton").hidden = true;
+
+    updatePointsPreview();
+}
+
+$("cancelButton").addEventListener("click", resetEditor);
+
+// ==========================================
+// SAVE CHALLENGE
+// ==========================================
+
+$("challengeForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const position = Number($("position").value);
+    const name = $("name").value.trim();
+    const creator = $("creator").value.trim();
+    const verifier = $("verifier").value.trim();
+    const levelId = $("levelId").value.trim();
+    const ratingInput = $("rating").value.trim();
+    const rating = ratingInput === "" ? null : Number(ratingInput);
+    const description = $("description").value.trim();
+    const verifierNote = $("verifierNote").value.trim();
+
+    if (!Number.isInteger(position) || position < 1) {
+        showMessage("Position must be a whole number above 0.", "error");
+        return;
+    }
+
+    if (!name || !creator || !verifier) {
+        showMessage("Name, creator and verifier are required.", "error");
+        return;
+    }
+
+    if (rating !== null &&
+        (!Number.isInteger(rating) || rating < 0 || rating > 100)) {
+        showMessage("Enjoyment rating must be between 0 and 100.", "error");
+        return;
+    }
+
+    setBusy(true);
+    showMessage("Saving platformer challenge...");
+
+    try {
+        const args = {
+            p_position: position,
+            p_name: name,
+            p_creator: creator,
+            p_verifier: verifier,
+            p_level_id: levelId || null,
+            p_description: description || null,
+            p_enjoyment_rating: rating,
+            p_verifier_note: verifierNote || null
+        };
+
+        let error;
+
+        if (editingId !== null) {
+            ({ error } = await db.rpc(
+                "ybcpl_admin_update_challenge",
+                {
+                    p_id: editingId,
+                    ...args
+                }
+            ));
+        } else {
+            ({ error } = await db.rpc(
+                "ybcpl_admin_add_challenge",
+                args
+            ));
+        }
+
+        if (error) throw error;
+
+        resetEditor();
+
+        await loadChallenges();
+        await loadCompletions();
+
+        showMessage(
+            "Challenge saved and points recalculated successfully.",
+            "success"
+        );
+
+    } catch (error) {
+        showMessage("Save failed: " + error.message, "error");
+
+    } finally {
+        setBusy(false);
+    }
+});
+
+// ==========================================
+// DELETE CHALLENGE
+// ==========================================
+
+async function deleteChallenge(challenge) {
+    if (busy) return;
+
+    const confirmed = confirm(
+        `Delete "${challenge.name}" at position ${challenge.position}?\n\n` +
+        "This also deletes its completion records and updates positions."
+    );
+
+    if (!confirmed) return;
+
+    setBusy(true);
+    showMessage("Deleting challenge...");
+
+    try {
+        const { error } = await db.rpc(
+            "ybcpl_admin_delete_challenge",
+            { p_id: challenge.id }
+        );
+
+        if (error) throw error;
+
+        if (String(editingId) === String(challenge.id)) {
+            resetEditor();
+        }
+
+        await loadChallenges();
+        await loadCompletions();
+
+        showMessage("Challenge deleted successfully.", "success");
+
+    } catch (error) {
+        showMessage("Delete failed: " + error.message, "error");
+
+    } finally {
+        setBusy(false);
+    }
+}
+
+// ==========================================
+// PLAYER MANAGEMENT
+// ==========================================
+
+async function getOrCreatePlayer(playerName, discordName) {
+    const player = {
+        player_name: playerName,
+        discord_username: discordName || null
+    };
+
+    const { data, error } = await db
+        .from("ybcpl_players")
+        .upsert(player, { onConflict: "player_name" })
+        .select("id, player_name")
+        .single();
+
+    if (error) throw error;
+
+    return data;
+}
+
+async function loadPlayersCount() {
+    const { count, error } = await db
+        .from("ybcpl_players")
+        .select("*", { count: "exact", head: true });
+
+    if (error) {
+        console.error("Player count error:", error.message);
+        return;
+    }
+
+    $("playerCount").textContent = count ?? 0;
+}
+
+// ==========================================
+// CHALLENGE SELECT
+// ==========================================
+
+function populateChallengeSelect() {
+    const select = $("completionChallenge");
+    select.replaceChildren();
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a platformer challenge";
+    select.append(placeholder);
+
+    for (const challenge of challenges) {
+        const option = document.createElement("option");
+        option.value = challenge.id;
+        option.textContent =
+            `#${challenge.position} - ${challenge.name} (${challenge.points} points)`;
+
+        select.append(option);
+    }
+}
+
+// ==========================================
+// ADD COMPLETION
+// ==========================================
+
+$("completionForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const playerName = $("playerName").value.trim();
+    const discordName = $("discordName").value.trim();
+    const challengeId = Number($("completionChallenge").value);
+    const verified = $("verifyImmediately").checked;
+
+    if (!playerName || !challengeId) {
+        showMessage("Enter a player and select a challenge.", "error");
+        return;
+    }
+
+    const challenge = challenges.find(
+        c => Number(c.id) === challengeId
+    );
+
+    if (!challenge) {
+        showMessage("Selected challenge could not be found.", "error");
+        return;
+    }
+
+    setBusy(true);
+    showMessage("Adding player completion...");
+
+    try {
+        const player = await getOrCreatePlayer(
+            playerName,
+            discordName
+        );
+
+        const { error } = await db
+            .from("ybcpl_completions")
+            .insert({
+                player_id: player.id,
+                challenge_id: challenge.id,
+                verified: verified,
+                verified_at: verified ? new Date().toISOString() : null,
+                verified_by: verified ? currentUserId : null
+            });
+
+        if (error) throw error;
+
+        $("completionForm").reset();
+        $("verifyImmediately").checked = true;
+
+        await loadCompletions();
+        await loadPlayersCount();
+
+        showMessage(
+            verified
+                ? `${playerName}'s completion was added and verified. They receive ${challenge.points} points.`
+                : `${playerName}'s completion was added as pending.`,
+            "success"
+        );
+
+    } catch (error) {
+        showMessage(
+            "Could not add completion: " + error.message +
+            "\n\nA player can only have one completion record per challenge.",
+            "error"
+        );
+
+    } finally {
+        setBusy(false);
+    }
+});
+
+// ==========================================
+// LOAD COMPLETIONS
+// ==========================================
+
+async function loadCompletions() {
+    $("completionList").textContent = "Loading completions...";
+
+    const { data, error } = await db
+        .from("ybcpl_completions")
+        .select(`
+            id,
+            player_id,
+            challenge_id,
+            verified,
+            submitted_at,
+            verified_at,
+            player:ybcpl_players(player_name, discord_username),
+            challenge:ybcpl_challenges(name, position, points)
+        `)
+        .order("submitted_at", { ascending: false });
+
+    if (error) {
+        $("completionList").textContent = "Could not load completions.";
+        console.error(error.message);
+        return;
+    }
+
+    completions = data || [];
+
+    $("completionCount").textContent =
+        completions.filter(c => c.verified).length;
+
+    renderCompletions();
+}
+
+// ==========================================
+// COMPLETION FILTER
+// ==========================================
+
+function setCompletionFilter(filter) {
+    completionFilter = filter;
+
+    $("allCompletionsTab").classList.toggle("active", filter === "all");
+    $("pendingTab").classList.toggle("active", filter === "pending");
+    $("verifiedTab").classList.toggle("active", filter === "verified");
+
+    renderCompletions();
+}
+
+// ==========================================
+// RENDER COMPLETIONS
+// ==========================================
+
+function renderCompletions() {
+    const list = $("completionList");
+    list.replaceChildren();
+
+    let filtered = completions;
+
+    if (completionFilter === "pending") {
+        filtered = completions.filter(c => !c.verified);
+    }
+
+    if (completionFilter === "verified") {
+        filtered = completions.filter(c => c.verified);
+    }
+
+    if (!filtered.length) {
+        list.textContent = "No completion records found.";
+        return;
+    }
+
+    for (const completion of filtered) {
+        const card = document.createElement("div");
+        card.className = "completion";
+
+        const status = document.createElement("div");
+        status.className = "position";
+        status.textContent = completion.verified ? "✓" : "…";
+
+        const info = document.createElement("div");
+
+        const name = document.createElement("div");
+        name.className = "completion-name";
+
+        name.textContent =
+            completion.player?.player_name || "Unknown player";
+
+        const details = document.createElement("div");
+        details.className = "details";
+
+        const challengeName = completion.challenge
+            ? `#${completion.challenge.position} - ${completion.challenge.name}`
+            : "Challenge unavailable";
+
+        details.textContent =
+            `${challengeName} · ` +
+            `${completion.player?.discord_username || "No Discord username"} · ` +
+            `${completion.challenge?.points ?? 0} points · ` +
+            (completion.verified ? "Verified" : "Pending");
+
+        const statusText = document.createElement("div");
+        statusText.className = completion.verified
+            ? "status-verified"
+            : "status-pending";
+
+        statusText.textContent = completion.verified
+            ? "VERIFIED"
+            : "PENDING";
+
+        info.append(name, details, statusText);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const verify = document.createElement("button");
+        verify.type = "button";
+        verify.textContent = completion.verified ? "Unverify" : "Verify";
+        verify.className = completion.verified ? "secondary" : "";
+
+        verify.addEventListener("click", () => toggleVerification(completion));
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Delete";
+        remove.className = "delete";
+
+        remove.addEventListener("click", () => deleteCompletion(completion));
+
+        actions.append(verify, remove);
+        card.append(status, info, actions);
+        list.append(card);
+    }
+}
+
+// ==========================================
+// VERIFY / UNVERIFY
+// ==========================================
+
+async function toggleVerification(completion) {
+    if (busy) return;
+
+    const nextStatus = !completion.verified;
+
+    const confirmed = confirm(
+        nextStatus
+            ? "Verify this completion?"
+            : "Remove verification from this completion?"
+    );
+
+    if (!confirmed) return;
+
+    setBusy(true);
+
+    try {
+        const { error } = await db
+            .from("ybcpl_completions")
+            .update({
+                verified: nextStatus,
+                verified_at: nextStatus ? new Date().toISOString() : null,
+                verified_by: nextStatus ? currentUserId : null
+            })
+            .eq("id", completion.id);
+
+        if (error) throw error;
+
+        await loadCompletions();
+
+        showMessage(
+            nextStatus
+                ? "Completion verified. Player points updated."
+                : "Completion unverified. Player points removed.",
+            "success"
+        );
+
+    } catch (error) {
+        showMessage("Verification failed: " + error.message, "error");
+
+    } finally {
+        setBusy(false);
+    }
+}
+
+// ==========================================
+// DELETE COMPLETION
+// ==========================================
+
+async function deleteCompletion(completion) {
+    if (busy) return;
+
+    if (!confirm("Permanently delete this completion?")) return;
+
+    setBusy(true);
+
+    try {
+        const { error } = await db
+            .from("ybcpl_completions")
+            .delete()
+            .eq("id", completion.id);
+
+        if (error) throw error;
+
+        await loadCompletions();
+
+        showMessage("Completion deleted successfully.", "success");
+
+    } catch (error) {
+        showMessage("Deletion failed: " + error.message, "error");
+
+    } finally {
+        setBusy(false);
+    }
+}
+
+// ==========================================
+// AUTH STATE
+// ==========================================
+
+db.auth.onAuthStateChange(event => {
+    if (event === "SIGNED_OUT") {
+        currentUserId = null;
+        $("loginPanel").hidden = false;
+        $("dashboard").hidden = true;
+    }
+});
+
+// ==========================================
+// INITIALISE
+// ==========================================
+
+checkAdmin().catch(error => {
+    $("loginPanel").hidden = false;
+    $("dashboard").hidden = true;
+
+    $("loginMessage").textContent = error.message;
+    $("loginMessage").className = "error";
+});
+
+updatePointsPreview();
+
+</script>
+</body>
+</html>

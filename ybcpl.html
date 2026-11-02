@@ -1,0 +1,580 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YBCPL | YBC Platformer List</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #101116;
+    color: #fff;
+}
+
+header {
+    background: #17181f;
+    border-bottom: 2px solid #d83232;
+    padding: 20px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+    color: #ff4545;
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+nav a:hover, nav a.active {
+    background: #d83232;
+    color: white;
+}
+
+.container {
+    width: 90%;
+    max-width: 1250px;
+    margin: 40px auto;
+}
+
+.hero {
+    background: linear-gradient(135deg, #211719, #15161c);
+    border: 1px solid #392326;
+    border-left: 5px solid #e33b3b;
+    border-radius: 10px;
+    padding: 35px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    margin: 0 0 12px;
+    font-size: 38px;
+}
+
+.hero h1 span {
+    color: #ff4545;
+}
+
+.hero p {
+    color: #aaa;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat {
+    background: #191a22;
+    border: 1px solid #292a34;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.stat-label {
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    color: #ff4545;
+    font-size: 27px;
+    font-weight: bold;
+}
+
+.section {
+    background: #191a22;
+    border: 1px solid #292a34;
+    border-radius: 9px;
+    padding: 22px;
+    margin-bottom: 25px;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.red {
+    color: #ff4545;
+}
+
+.search {
+    width: 100%;
+    max-width: 350px;
+    background: #101116;
+    border: 1px solid #383943;
+    color: white;
+    padding: 12px 14px;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+}
+
+.search:focus {
+    border-color: #e33b3b;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th {
+    text-align: left;
+    color: #999;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 13px;
+    border-bottom: 1px solid #343540;
+}
+
+td {
+    padding: 15px 13px;
+    border-bottom: 1px solid #292a34;
+    font-size: 14px;
+}
+
+tbody tr:hover {
+    background: #22232d;
+}
+
+.rank {
+    color: #ff4545;
+    font-weight: bold;
+}
+
+.level-link {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.level-link:hover {
+    color: #ff4545;
+}
+
+.points {
+    color: #ff5555;
+    font-weight: bold;
+}
+
+.empty {
+    text-align: center;
+    color: #888;
+    padding: 35px;
+}
+
+.loading {
+    color: #aaa;
+    text-align: center;
+    padding: 30px;
+}
+
+.error {
+    color: #ff6666;
+    text-align: center;
+    padding: 20px;
+}
+
+.player-link {
+    color: #ff4545;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.player-link:hover {
+    text-decoration: underline;
+}
+
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-size: 13px;
+    border-top: 1px solid #292a34;
+    margin-top: 50px;
+}
+
+@media (max-width: 650px) {
+    header {
+        padding: 18px 5%;
+    }
+
+    .container {
+        width: 94%;
+        margin-top: 25px;
+    }
+
+    .hero {
+        padding: 25px;
+    }
+
+    .hero h1 {
+        font-size: 29px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .section {
+        padding: 15px;
+    }
+
+    .section-heading {
+        align-items: stretch;
+    }
+
+    .search {
+        max-width: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a class="logo" href="ybcpl.html">YBCPL</a>
+
+    <nav>
+        <a href="index.html">YBCCL</a>
+        <a href="ybcpl.html" class="active">Platformer</a>
+        <a href="ybcpl-leaderboard.html">Players</a>
+        <a href="spam.html">Spam List</a>
+    </nav>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <h1>YBC <span>Platformer</span> List</h1>
+        <p>
+            The YBC Platformer List: platformer challenges ranked
+            by difficulty. Discover the hardest platformer challenges
+            and compete for a place on the leaderboard.
+        </p>
+    </section>
+
+    <section class="stats">
+        <div class="stat">
+            <div class="stat-label">Ranked Challenges</div>
+            <div class="stat-value" id="challengeCount">—</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Top Challenge</div>
+            <div class="stat-value" id="topPoints">—</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Registered Players</div>
+            <div class="stat-value" id="playerCount">—</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-heading">
+            <h2><span class="red">Platformer</span> Leaderboard</h2>
+            <input
+                type="text"
+                id="search"
+                class="search"
+                placeholder="Search challenges..."
+            >
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Challenge</th>
+                        <th>Creator</th>
+                        <th>Verifier</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="challengeTable">
+                    <tr>
+                        <td colspan="5" class="loading">
+                            Loading platformer challenges...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-heading">
+            <h2><span class="red">Player</span> Leaderboard</h2>
+            <a class="player-link" href="ybcpl-leaderboard.html">
+                View full leaderboard →
+            </a>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Completions</th>
+                        <th>Total Points</th>
+                    </tr>
+                </thead>
+                <tbody id="playerTable">
+                    <tr>
+                        <td colspan="4" class="loading">
+                            Loading players...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    YBC Platformer List · Part of the YBC community
+</footer>
+
+<script>
+const SUPABASE_URL = "https://hdsorzrcvvyakckbgegk.supabase.co";
+const SUPABASE_KEY = "sb_publishable__RCrx7HGA5RDkv0t63O0sg_JNT-qk8P";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+let challenges = [];
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function renderChallenges() {
+    const search = document.getElementById("search").value
+        .trim()
+        .toLowerCase();
+
+    const filtered = challenges.filter(challenge => {
+        return [
+            challenge.name,
+            challenge.creator,
+            challenge.verifier
+        ].some(value => String(value ?? "").toLowerCase().includes(search));
+    });
+
+    const tbody = document.getElementById("challengeTable");
+
+    if (!filtered.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    No challenges found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(challenge => `
+        <tr>
+            <td class="rank">#${escapeHTML(challenge.position)}</td>
+            <td>
+                <a class="level-link"
+                   href="ybcpl-level.html?id=${encodeURIComponent(challenge.id)}">
+                    ${escapeHTML(challenge.name)}
+                </a>
+            </td>
+            <td>${escapeHTML(challenge.creator || "Unknown")}</td>
+            <td>${escapeHTML(challenge.verifier || "Unknown")}</td>
+            <td class="points">${Number(challenge.points || 0).toLocaleString()}</td>
+        </tr>
+    `).join("");
+}
+
+async function loadChallenges() {
+    const { data, error } = await db
+        .from("ybcpl_challenges")
+        .select("*")
+        .order("position", { ascending: true });
+
+    if (error) {
+        document.getElementById("challengeTable").innerHTML = `
+            <tr>
+                <td colspan="5" class="error">
+                    Could not load challenges: ${escapeHTML(error.message)}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    challenges = data || [];
+
+    document.getElementById("challengeCount").textContent =
+        challenges.length;
+
+    document.getElementById("topPoints").textContent =
+        challenges.length
+            ? Number(challenges[0].points || 0).toLocaleString()
+            : "0";
+
+    renderChallenges();
+}
+
+function firstAvailable(object, keys, fallback = 0) {
+    for (const key of keys) {
+        if (object[key] !== undefined && object[key] !== null) {
+            return object[key];
+        }
+    }
+    return fallback;
+}
+
+async function loadPlayers() {
+    const tbody = document.getElementById("playerTable");
+
+    const { data, error } = await db
+        .from("ybcpl_player_scores")
+        .select("*");
+
+    if (error) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="error">
+                    Player leaderboard unavailable.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const players = data || [];
+
+    document.getElementById("playerCount").textContent = players.length;
+
+    const sorted = players.sort((a, b) => {
+        const pointsA = Number(firstAvailable(
+            a, ["total_points", "points", "total_score", "score"]
+        ));
+        const pointsB = Number(firstAvailable(
+            b, ["total_points", "points", "total_score", "score"]
+        ));
+        return pointsB - pointsA;
+    }).slice(0, 5);
+
+    if (!sorted.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty">
+                    No players registered yet.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = sorted.map((player, index) => {
+        const name = firstAvailable(
+            player, ["player_name", "name"], "Unknown"
+        );
+
+        const completions = firstAvailable(
+            player,
+            ["verified_completions", "completed_levels", "completions"],
+            0
+        );
+
+        const points = firstAvailable(
+            player,
+            ["total_points", "points", "total_score", "score"],
+            0
+        );
+
+        return `
+            <tr>
+                <td class="rank">#${index + 1}</td>
+                <td>${escapeHTML(name)}</td>
+                <td>${escapeHTML(completions)}</td>
+                <td class="points">${Number(points).toLocaleString()}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+document.getElementById("search").addEventListener(
+    "input",
+    renderChallenges
+);
+
+async function loadPage() {
+    await Promise.all([
+        loadChallenges(),
+        loadPlayers()
+    ]);
+}
+
+loadPage();
+</script>
+
+</body>
+</html>
